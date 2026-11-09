@@ -4,6 +4,16 @@
 PIR 센서가 움직임을 감지하면 카메라로 촬영하고, 사람인지 판별한 뒤
 LED·부저로 경고하고 텔레그램으로 사진을 전송합니다.
 
+## 빠른 시작 (하드웨어 없이 테스트)
+```bash
+git clone https://github.com/mokpoproject/smart_CCTV.git
+cd smart_CCTV
+source ~/cctv-env/bin/activate
+MOCK=1 CAMERA_SOURCE=file python3 main.py
+```
+Enter 키를 누를 때마다 움직임이 감지된 것으로 처리됩니다. 종료는 Ctrl+C입니다.
+`cctv-env` 가상환경이 없다면 아래 [설치](#설치)를 먼저 진행하세요.
+
 ## 동작 흐름
 PIR 감지 → 카메라 촬영 → 사람 판별(OpenCV HOG) → LED·부저 경고 + 텔레그램 전송 → 기록 저장
 
