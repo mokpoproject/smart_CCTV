@@ -27,6 +27,7 @@ PIR 감지 → 카메라 촬영 → 사람 판별(OpenCV HOG) → LED·부저 �
 | `detector.py` | 2단계 | AI 사람 판별 (OpenCV HOG) |
 | `notifier.py` | 3단계 | 텔레그램 사진 전송 (백그라운드) |
 | `event_log.py` | 4단계 | 사진 저장 + SQLite 이벤트 기록 |
+| `telegram_test.py` | 3단계 | 텔레그램 채팅 ID 찾기, 전송 테스트 |
 
 ## 하드웨어
 | 부품 | 용도 |
@@ -77,13 +78,34 @@ rpicam-still -o test.jpg
 ```
 USB 웹캠은 `ls /dev/video*`로 장치가 보이는지 확인합니다.
 
-## 설정
+## 텔레그램 설정
+
+### 1. 봇 만들기 (폰 텔레그램 앱)
+1. 검색창에서 **@BotFather**를 찾아 대화를 시작합니다.
+2. `/newbot`을 보내고, 봇 이름과 아이디(끝이 `bot`으로 끝나야 함, 예: `mokpo_cctv_bot`)를 정합니다.
+3. BotFather가 알려 주는 **토큰**(`123456789:ABC...` 형태)을 복사해 둡니다.
+4. 방금 만든 내 봇을 검색해서 **`/start`를 한 번 보냅니다.** (보내야 채팅 ID를 찾을 수 있음)
+
+### 2. 토큰 입력
 ```bash
 cp .env.example .env
-nano .env   # TELEGRAM_TOKEN, TELEGRAM_CHAT_ID 입력
+nano .env   # TELEGRAM_TOKEN= 뒤에 토큰 붙여 넣기
 ```
-토큰이 비어 있으면 실제로 보내지 않고 화면에 `[DRY-RUN]`으로만 표시합니다.
-`.env`는 `.gitignore`에 들어 있어 GitHub에 올라가지 않습니다.
+
+### 3. 채팅 ID 찾기
+```bash
+python3 telegram_test.py chatid
+```
+출력된 숫자를 `.env`의 `TELEGRAM_CHAT_ID=` 뒤에 넣습니다.
+
+### 4. 전송 테스트
+```bash
+python3 telegram_test.py
+```
+폰으로 테스트 메시지와 사진이 오면 연결 완료입니다.
+
+토큰이 비어 있으면 `main.py`는 실제로 보내지 않고 화면에 `[DRY-RUN]`으로만 표시합니다.
+`.env`는 `.gitignore`에 들어 있어 GitHub에 올라가지 않습니다. **토큰을 코드나 README에 직접 쓰지 마세요.**
 
 ## 실행
 ```bash

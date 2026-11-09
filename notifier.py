@@ -41,3 +41,6 @@ class TelegramNotifier:
         except requests.RequestException as e:
             print(f"[텔레그램] 네트워크 오류: {e}")
             return False
+        except ValueError:
+            print(f"[텔레그램] 응답 해석 실패 ({r.status_code})")
+            return False
