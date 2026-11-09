@@ -1,0 +1,76 @@
+# PIR 연동 AIoT 스마트 CCTV
+
+라즈베리파이 5 + 카메라 + PIR 센서로 만든 AIoT 스마트 CCTV입니다.
+PIR 센서가 움직임을 감지하면 카메라로 촬영하고, 사람인지 판별한 뒤
+LED·부저로 경고하고 텔레그램으로 사진을 전송합니다.
+
+## 동작 흐름
+PIR 감지 → 카메라 촬영 → 사람 판별(OpenCV HOG) → LED·부저 경고 + 텔레그램 전송 → 기록 저장
+
+## 파일 구조
+| 파일 | 단계 | 역할 |
+|---|---|---|
+| `main.py` | 전체 | 1~4단계를 순서대로 연결하는 메인 루프 |
+| `config.py` | - | 핀 번호, 경로, 판별 기준 등 설정 |
+| `hardware.py` | 1단계 | PIR 센서 감지, LED·부저 경고 (gpiozero) |
+| `camera.py` | 2단계 | 카메라 촬영 (picamera2 / USB 웹캠 / 테스트 이미지) |
+| `detector.py` | 2단계 | AI 사람 판별 (OpenCV HOG) |
+| `notifier.py` | 3단계 | 텔레그램 사진 전송 (백그라운드) |
+| `event_log.py` | 4단계 | 사진 저장 + SQLite 이벤트 기록 |
+
+## 하드웨어
+| 부품 | 용도 |
+|---|---|
+| Raspberry Pi 5 | 메인 보드 |
+| 카메라 모듈 (Pi 5 전용 케이블) 또는 USB 웹캠 | 촬영 |
+| PIR 센서 (HC-SR501) | 움직임 감지 |
+| LED + 220Ω 저항 | 경고 표시 |
+| 능동 부저 | 경고음 |
+| 점퍼선, 브레드보드 | 배선 |
+
+## 배선
+| 부품 | 핀 |
+|---|---|
+| PIR VCC | 5V (2번) |
+| PIR GND | GND (6번) |
+| PIR OUT | GPIO17 (11번) |
+| LED (+) → 220Ω | GPIO27 (13번) |
+| 부저 (+) | GPIO22 (15번) |
+| LED·부저 (−) | GND (14번) |
+
+## 설치
+```bash
+sudo apt update
+sudo apt install -y python3-picamera2 python3-opencv python3-gpiozero python3-lgpio python3-requests python3-flask
+
+# apt로 설치한 picamera2를 쓰려면 --system-site-packages 필요
+python3 -m venv --system-site-packages ~/cctv-env
+source ~/cctv-env/bin/activate
+```
+
+## 설정
+```bash
+cp .env.example .env
+nano .env   # TELEGRAM_TOKEN, TELEGRAM_CHAT_ID 입력
+```
+토큰이 비어 있으면 실제로 보내지 않고 화면에 `[DRY-RUN]`으로만 표시합니다.
+`.env`는 `.gitignore`에 들어 있어 GitHub에 올라가지 않습니다.
+
+## 실행
+```bash
+python3 main.py                            # 실제 하드웨어
+MOCK=1 CAMERA_SOURCE=file python3 main.py  # 하드웨어 없이 테스트 (Enter = 움직임 감지)
+python3 main.py --log                      # 최근 감지 기록 보기
+```
+하드웨어 없이 테스트할 때는 `test_images/` 폴더에 사람 사진(전신)을 넣어 두면
+촬영한 것처럼 차례로 사용합니다.
+
+## 사용 모듈
+| 모듈 | 용도 |
+|---|---|
+| picamera2 | 카메라 촬영 |
+| opencv | 영상 처리, 사람 판별 |
+| gpiozero, lgpio | GPIO 제어 (Pi 5는 RPi.GPIO 미지원) |
+| requests | 텔레그램 Bot API 전송 |
+| sqlite3 | 이벤트 기록 (파이썬 기본 모듈) |
+| flask | 웹 스트리밍 (선택, 추후) |

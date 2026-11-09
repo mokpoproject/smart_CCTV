@@ -1,0 +1,11 @@
+# 비밀 값 (텔레그램 토큰)
+.env
+
+# 실행하면서 생기는 기록·사진
+captures/
+events.db
+
+# 파이썬
+__pycache__/
+*.pyc
+cctv-env/
