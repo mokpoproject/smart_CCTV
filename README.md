@@ -49,14 +49,33 @@ PIR 감지 → 카메라 촬영 → 사람 판별(OpenCV HOG) → LED·부저 �
 | LED·부저 (−) | GND (14번) |
 
 ## 설치
+
+### 1. 시스템 패키지
+picamera2, gpiozero 등은 pip가 아니라 apt로 설치해야 합니다. (`requirements.txt` 대신 아래 명령 사용)
 ```bash
 sudo apt update
-sudo apt install -y python3-picamera2 python3-opencv python3-gpiozero python3-lgpio python3-requests python3-flask
+sudo apt install -y git python3-picamera2 python3-opencv python3-numpy python3-gpiozero python3-lgpio python3-requests python3-flask
+```
 
-# apt로 설치한 picamera2를 쓰려면 --system-site-packages 필요
+### 2. 가상환경
+apt로 설치한 picamera2를 쓰려면 `--system-site-packages` 옵션이 필요합니다.
+기존에 이 옵션 없이 만든 가상환경에서는 picamera2를 불러올 수 없습니다.
+```bash
 python3 -m venv --system-site-packages ~/cctv-env
 source ~/cctv-env/bin/activate
 ```
+
+### 3. 설치 확인
+```bash
+python3 -c "import cv2, numpy, picamera2, gpiozero, requests; print('OK')"
+```
+`OK`가 출력되면 설치 완료입니다.
+
+카메라를 연결한 뒤에는 사진이 찍히는지 확인합니다. (SSH에서도 동작)
+```bash
+rpicam-still -o test.jpg
+```
+USB 웹캠은 `ls /dev/video*`로 장치가 보이는지 확인합니다.
 
 ## 설정
 ```bash
@@ -80,6 +99,7 @@ python3 main.py --log                      # 최근 감지 기록 보기
 |---|---|
 | picamera2 | 카메라 촬영 |
 | opencv | 영상 처리, 사람 판별 |
+| numpy | 이미지 배열 처리 |
 | gpiozero, lgpio | GPIO 제어 (Pi 5는 RPi.GPIO 미지원) |
 | requests | 텔레그램 Bot API 전송 |
 | sqlite3 | 이벤트 기록 (파이썬 기본 모듈) |
