@@ -38,7 +38,9 @@ USE_ALARM = True  # LED·부저 경고를 쓸지 여부
 # "auto" : picamera2 → USB 웹캠 → 테스트 이미지 순서로 자동 선택
 # "picamera" / "usb" / "file" 로 고정할 수도 있음
 CAMERA_SOURCE = os.getenv("CAMERA_SOURCE", "auto")
-USB_CAMERA_INDEX = 0
+USB_CAMERA_INDEX = 0      # /dev/video0 (v4l2-ctl --list-devices 로 확인)
+USB_WARMUP_FRAMES = 10    # 웹캠을 연 직후 버릴 프레임 수 (밝기 안정화)
+USB_FLUSH_FRAMES = 5      # 촬영 직전 비울 버퍼 프레임 수 (지난 화면 방지)
 FRAME_SIZE = (1280, 720)
 TEST_IMAGE_DIR = BASE_DIR / "test_images"   # file 모드에서 쓸 사진 폴더
 

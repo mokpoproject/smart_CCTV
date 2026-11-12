@@ -39,11 +39,18 @@ class Camera:
         self._cam = cam
 
     def _open_usb(self):
-        cap = cv2.VideoCapture(config.USB_CAMERA_INDEX)
+        # V4L2로 직접 열면 GStreamer 경고 없이 더 안정적으로 동작
+        cap = cv2.VideoCapture(config.USB_CAMERA_INDEX, cv2.CAP_V4L2)
         if not cap.isOpened():
-            raise RuntimeError("USB 웹캠을 찾지 못함")
+            cap = cv2.VideoCapture(config.USB_CAMERA_INDEX)
+        if not cap.isOpened():
+            raise RuntimeError(f"USB 웹캠(/dev/video{config.USB_CAMERA_INDEX})을 찾지 못함")
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, config.FRAME_SIZE[0])
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, config.FRAME_SIZE[1])
+        cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)   # 지원하는 웹캠이면 버퍼를 1장으로
+        # 켜진 직후 몇 장은 밝기 자동조절 중이라 어두움 → 버림
+        for _ in range(config.USB_WARMUP_FRAMES):
+            cap.read()
         self._cam = cap
 
     def _open_file(self):
@@ -60,6 +67,10 @@ class Camera:
             return self._cam.capture_array()
 
         if self.backend == "usb":
+            # 웹캠은 지난 프레임을 버퍼에 쌓아 두므로, 쌓인 것을 비우고 지금 화면을 읽음
+            # (안 비우면 PIR 감지 시점보다 몇 초 전 화면이 찍힐 수 있음)
+            for _ in range(config.USB_FLUSH_FRAMES):
+                self._cam.grab()
             ok, frame = self._cam.read()
             if not ok:
                 raise RuntimeError("웹캠 프레임 읽기 실패")

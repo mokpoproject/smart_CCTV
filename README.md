@@ -28,12 +28,13 @@ PIR 감지 → 카메라 촬영 → 사람 판별(OpenCV HOG) → LED·부저 �
 | `notifier.py` | 3단계 | 텔레그램 사진 전송 (백그라운드) |
 | `event_log.py` | 4단계 | 사진 저장 + SQLite 이벤트 기록 |
 | `telegram_test.py` | 3단계 | 텔레그램 채팅 ID 찾기, 전송 테스트 |
+| `pir_test.py` | 1단계 | PIR 센서 단독 테스트 (배선 확인용) |
 
 ## 하드웨어
 | 부품 | 용도 |
 |---|---|
 | Raspberry Pi 5 | 메인 보드 |
-| 카메라 모듈 (Pi 5 전용 케이블) 또는 USB 웹캠 | 촬영 |
+| USB 웹캠 (또는 카메라 모듈 + Pi 5 전용 케이블) | 촬영 |
 | PIR 센서 (HC-SR501) | 움직임 감지 |
 | LED + 220Ω 저항 | 경고 표시 |
 | 능동 부저 | 경고음 |
@@ -48,6 +49,11 @@ PIR 감지 → 카메라 촬영 → 사람 판별(OpenCV HOG) → LED·부저 �
 | LED (+) → 220Ω | GPIO27 (13번) |
 | 부저 (+) | GPIO22 (15번) |
 | LED·부저 (−) | GND (14번) |
+
+- 핀 번호는 **SD카드 슬롯 쪽 끝이 1번**이고, 보드 바깥쪽 줄이 짝수(2, 4, 6…), 안쪽 줄이 홀수(1, 3, 5…)입니다.
+- PIR 센서의 핀 순서(VCC·OUT·GND)는 제품마다 다를 수 있으니, 흰 렌즈 돔을 빼서 핀 옆 글씨를 확인하세요.
+- **배선은 반드시 라즈베리파이 전원을 끈 상태에서** 합니다. VCC와 GND를 바꿔 꽂으면 센서가 망가질 수 있습니다.
+- LED와 부저는 선택 부품입니다. 연결하지 않아도 프로그램은 정상 동작합니다.
 
 ## 설치
 
@@ -76,7 +82,39 @@ python3 -c "import cv2, numpy, picamera2, gpiozero, requests; print('OK')"
 ```bash
 rpicam-still -o test.jpg
 ```
-USB 웹캠은 `ls /dev/video*`로 장치가 보이는지 확인합니다.
+## 하드웨어 테스트
+
+### USB 웹캠
+```bash
+lsusb                      # 목록에 웹캠 이름이 보이면 인식 성공
+sudo apt install -y v4l-utils
+v4l2-ctl --list-devices    # 웹캠 이름 아래 첫 번째 /dev/videoN 이 웹캠
+```
+`pispbe`, `rpi-hevc-dec`, `rp1-cfe` 아래 장치는 라즈베리파이 내부 장치이므로 무시합니다.
+웹캠이 `/dev/video0`이 아니면 `config.py`의 `USB_CAMERA_INDEX`를 그 번호로 바꿉니다.
+
+사진 한 장 찍어 보기:
+```bash
+python3 -c "import cv2; c=cv2.VideoCapture(0); [c.read() for _ in range(10)]; ok,f=c.read(); print('촬영 성공' if ok else '실패'); ok and cv2.imwrite('usbtest.jpg', f)"
+```
+노트북으로 가져와 확인하기 (노트북 cmd에서, IP는 라즈베리파이에서 `hostname -I`로 확인):
+```bash
+scp h223603@라즈베리파이IP:~/usbtest.jpg .
+```
+
+### PIR 센서
+1. 센서 뒷면 나사 조절: **지속 시간(Tx)은 반시계 끝까지(가장 짧게)**, **감도(Sx)는 가운데**
+2. 전원을 켜고 **약 1분 기다린 뒤**(센서 안정화) 테스트합니다.
+```bash
+python3 pir_test.py
+```
+손을 흔들면 `감지`, 가만히 있으면 `없음`이 출력되면 정상입니다.
+
+### 전체 실행 (PIR + USB 웹캠)
+```bash
+CAMERA_SOURCE=usb python3 main.py
+```
+CSI 카메라 모듈을 쓰는 경우는 `rpicam-still -o test.jpg`로 먼저 촬영을 확인합니다.
 
 ## 텔레그램 설정
 
