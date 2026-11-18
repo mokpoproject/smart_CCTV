@@ -33,7 +33,8 @@ class EventLog:
         # 전송 결과는 다른 스레드에서 기록하므로 호출마다 새 연결을 연다
         return sqlite3.connect(self.db_path)
 
-    def save_image(self, image, now=None):
+    @staticmethod
+    def save_image(image, now=None):
         now = now or datetime.now()
         folder = config.CAPTURE_DIR / now.strftime("%Y%m%d")
         folder.mkdir(parents=True, exist_ok=True)

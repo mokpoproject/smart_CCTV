@@ -25,6 +25,10 @@ class TelegramNotifier:
                 on_done(ok)
         threading.Thread(target=job, daemon=True).start()
 
+    def send_photo_now(self, image_path, caption):
+        """사진을 바로 보내고 끝날 때까지 기다린다 (단발성 스크립트용). 성공여부 반환."""
+        return self._send(image_path, caption)
+
     def _send(self, image_path, caption):
         if not self.enabled:
             print(f"[DRY-RUN] 텔레그램 전송 생략: {image_path} / {caption}")
