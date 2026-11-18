@@ -44,6 +44,16 @@ USB_FLUSH_FRAMES = 5      # 촬영 직전 비울 버퍼 프레임 수 (지난 �
 FRAME_SIZE = (1280, 720)
 TEST_IMAGE_DIR = BASE_DIR / "test_images"   # file 모드에서 쓸 사진 폴더
 
+# 사람 판별기 선택
+#   "mobilenet" : MobileNet-SSD 딥러닝 모델 (기본, 정확도 높음 / 상반신·앉은 사람도 검출)
+#   "hog"       : OpenCV 내장 HOG (모델 파일 불필요, 전신만 검출 / 기둥 등 오탐 많음)
+DETECTOR = os.getenv("DETECTOR", "mobilenet")
+
+# MobileNet-SSD 설정
+MODEL_DIR = BASE_DIR / "models"   # 모델 파일 저장 위치 (처음 실행 시 자동 다운로드)
+PERSON_CONFIDENCE = 0.5           # 확신도가 이 값 이상이면 사람으로 인정 (0~1)
+
+# HOG 설정
 DETECT_WIDTH = 640         # 판별 전에 이 너비로 줄여서 속도 확보
 PERSON_MIN_SCORE = 0.5     # HOG 점수가 이 값 이상이면 사람으로 인정
 

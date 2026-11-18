@@ -28,8 +28,8 @@ def main():
     caption = f"📷 수동 촬영\n시각: {now:%Y-%m-%d %H:%M:%S}"
 
     if not raw:
-        from detector import PersonDetector
-        is_person, count, frame = PersonDetector().detect(frame)
+        from detector import create_detector
+        is_person, count, frame = create_detector().detect(frame)
         caption += f"\n사람 판별: {f'{count}명' if is_person else '없음'}"
 
     path = EventLog.save_image(frame, now)   # 사진만 저장

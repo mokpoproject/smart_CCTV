@@ -9,3 +9,7 @@ events.db
 __pycache__/
 *.pyc
 cctv-env/
+
+# AI 모델 파일 (처음 실행 시 자동 다운로드)
+models/
+detect_result.jpg

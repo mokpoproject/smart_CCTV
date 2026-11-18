@@ -63,13 +63,13 @@ def main():
 
     # 무거운 모듈은 필요할 때만 불러옴
     from camera import Camera
-    from detector import PersonDetector
+    from detector import create_detector
     from hardware import Hardware
     from notifier import TelegramNotifier
 
     hw = Hardware()
     camera = Camera()
-    detector = PersonDetector()
+    detector = create_detector()
     notifier = TelegramNotifier()
     log = EventLog()
 

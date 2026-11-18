@@ -15,7 +15,7 @@ Enter 키를 누를 때마다 움직임이 감지된 것으로 처리됩니다. 
 `cctv-env` 가상환경이 없다면 아래 [설치](#설치)를 먼저 진행하세요.
 
 ## 동작 흐름
-PIR 감지 → 카메라 촬영 → 사람 판별(OpenCV HOG) → LED·부저 경고 + 텔레그램 전송 → 기록 저장
+PIR 감지 → 카메라 촬영 → 사람 판별(MobileNet-SSD) → LED·부저 경고 + 텔레그램 전송 → 기록 저장
 
 ## 파일 구조
 | 파일 | 단계 | 역할 |
@@ -24,7 +24,7 @@ PIR 감지 → 카메라 촬영 → 사람 판별(OpenCV HOG) → LED·부저 �
 | `config.py` | - | 핀 번호, 경로, 판별 기준 등 설정 |
 | `hardware.py` | 1단계 | PIR 센서 감지, LED·부저 경고 (gpiozero) |
 | `camera.py` | 2단계 | 카메라 촬영 (picamera2 / USB 웹캠 / 테스트 이미지) |
-| `detector.py` | 2단계 | AI 사람 판별 (OpenCV HOG) |
+| `detector.py` | 2단계 | AI 사람 판별 (MobileNet-SSD, HOG 선택 가능) |
 | `notifier.py` | 3단계 | 텔레그램 사진 전송 (백그라운드) |
 | `event_log.py` | 4단계 | 사진 저장 + SQLite 이벤트 기록 |
 | `telegram_test.py` | 3단계 | 텔레그램 채팅 ID 찾기, 전송 테스트 |
@@ -111,6 +111,22 @@ python3 pir_test.py
 ```
 손을 흔들면 `감지`, 가만히 있으면 `없음`이 출력되면 정상입니다.
 
+### AI 판별기 (MobileNet-SSD)
+처음 실행할 때 모델 파일(약 23MB)을 `models/` 폴더로 자동으로 받습니다. 미리 받아 두려면:
+```bash
+python3 detector.py              # 모델 다운로드 + 확인
+python3 detector.py 사진.jpg     # 사진 한 장 판별 → detect_result.jpg
+```
+
+| 판별기 | 장점 | 단점 |
+|---|---|---|
+| **MobileNet-SSD** (기본) | 상반신·앉은 사람도 검출, 기둥 같은 세로선 오탐이 적음 | 모델 파일 다운로드 필요 |
+| HOG | 추가 파일 불필요 | 서 있는 전신만 검출, 기둥·봉을 사람으로 오탐 |
+
+HOG로 바꾸려면 `.env`에 `DETECTOR=hog`를 넣습니다.
+사람 판별 기준은 `config.py`의 `PERSON_CONFIDENCE`(기본 0.5)로 조절합니다.
+모델 출처: [chuanqi305/MobileNet-SSD](https://github.com/chuanqi305/MobileNet-SSD) (MIT License)
+
 ### 사진 한 장 찍어 텔레그램으로 보내기
 ```bash
 python3 snap.py          # 사람 판별 박스까지 그려서 전송
@@ -159,14 +175,14 @@ python3 main.py                            # 실제 하드웨어
 MOCK=1 CAMERA_SOURCE=file python3 main.py  # 하드웨어 없이 테스트 (Enter = 움직임 감지)
 python3 main.py --log                      # 최근 감지 기록 보기
 ```
-하드웨어 없이 테스트할 때는 `test_images/` 폴더에 사람 사진(전신)을 넣어 두면
+하드웨어 없이 테스트할 때는 `test_images/` 폴더에 사람 사진을 넣어 두면
 촬영한 것처럼 차례로 사용합니다.
 
 ## 사용 모듈
 | 모듈 | 용도 |
 |---|---|
 | picamera2 | 카메라 촬영 |
-| opencv | 영상 처리, 사람 판별 |
+| opencv | 영상 처리, 사람 판별 (DNN 모듈로 MobileNet-SSD 실행) |
 | numpy | 이미지 배열 처리 |
 | gpiozero, lgpio | GPIO 제어 (Pi 5는 RPi.GPIO 미지원) |
 | requests | 텔레그램 Bot API 전송 |
